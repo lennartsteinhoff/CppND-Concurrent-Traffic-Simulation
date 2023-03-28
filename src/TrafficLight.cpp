@@ -1,6 +1,14 @@
 #include <iostream>
 #include <random>
+#include <chrono>
+#include <cstdlib>
+
 #include "TrafficLight.h"
+
+using namespace std::chrono;
+
+constexpr int MIN_CYCLE_TIME_MS = 4000;
+constexpr int MAX_CYCLE_TIME_MS = 6000;
 
 /* Implementation of class "MessageQueue" */
 
@@ -23,7 +31,7 @@ void MessageQueue<T>::send(T &&msg)
 
 /* Implementation of class "TrafficLight" */
 
-/* 
+
 TrafficLight::TrafficLight()
 {
     _currentPhase = TrafficLightPhase::red;
@@ -43,16 +51,31 @@ TrafficLightPhase TrafficLight::getCurrentPhase()
 
 void TrafficLight::simulate()
 {
+    threads.emplace_back(std::thread(&TrafficLight::cycleThroughPhases, this));
     // FP.2b : Finally, the private method „cycleThroughPhases“ should be started in a thread when the public method „simulate“ is called. To do this, use the thread queue in the base class. 
 }
 
 // virtual function which is executed in a thread
 void TrafficLight::cycleThroughPhases()
 {
+    
     // FP.2a : Implement the function with an infinite loop that measures the time between two loop cycles 
     // and toggles the current phase of the traffic light between red and green and sends an update method 
     // to the message queue using move semantics. The cycle duration should be a random value between 4 and 6 seconds. 
     // Also, the while-loop should use std::this_thread::sleep_for to wait 1ms between two cycles. 
-}
+    auto t0 = system_clock::now();
+    auto t1 = system_clock::now();
+    while(true) {
+   
+        t1 = system_clock::now();
+        auto time_diff = t1 - t0;
+        //TODO:Implement RAND()
+        if (time_diff >= milliseconds(milliseconds(std::rand() % (MAX_CYCLE_TIME_MS - MIN_CYCLE_TIME_MS ) + MIN_CYCLE_TIME_MS) )) {
+            _currentPhase = _currentPhase == TrafficLightPhase::green ? TrafficLightPhase::red : TrafficLightPhase::green;
+            std::cout << "TrafficLight CurrentPhase :" << (_currentPhase == TrafficLightPhase::green ? "green" : "red") << std::endl;
+            t0 = t1;
+        }
+        std::this_thread::sleep_for(milliseconds(1));
+    }
 
-*/
+}

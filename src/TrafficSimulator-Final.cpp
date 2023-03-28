@@ -7,6 +7,8 @@
 #include "Intersection.h"
 #include "Graphics.h"
 
+#include "TrafficLight.h"
+
 
 // Paris
 void createTrafficObjects_Paris(std::vector<std::shared_ptr<Street>> &streets, std::vector<std::shared_ptr<Intersection>> &intersections, std::vector<std::shared_ptr<Vehicle>> &vehicles, std::string &filename, int nVehicles)
@@ -126,7 +128,8 @@ int main()
     createTrafficObjects_Paris(streets, intersections, vehicles, backgroundImg, nVehicles);
 
     /* PART 2 : simulate traffic objects */
-
+    TrafficLight tl;
+    tl.simulate();
     // simulate intersection
     std::for_each(intersections.begin(), intersections.end(), [](std::shared_ptr<Intersection> &i) {
         i->simulate();
@@ -150,6 +153,8 @@ int main()
         std::shared_ptr<TrafficObject> trafficObject = std::dynamic_pointer_cast<TrafficObject>(vehicles);
         trafficObjects.push_back(trafficObject);
     });
+
+ 
 
     // draw all objects in vector
     Graphics *graphics = new Graphics();
