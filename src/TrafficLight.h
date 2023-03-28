@@ -34,7 +34,7 @@ class TrafficLight
 {
 public:
     // constructor / desctructor
-
+    TrafficLight();
     // getters / setters
 
     // typical behaviour methods
