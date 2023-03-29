@@ -12,13 +12,20 @@ constexpr int MAX_CYCLE_TIME_MS = 6000;
 
 /* Implementation of class "MessageQueue" */
 
-/* 
+ 
 template <typename T>
 T MessageQueue<T>::receive()
 {
     // FP.5a : The method receive should use std::unique_lock<std::mutex> and _condition.wait() 
     // to wait for and receive new messages and pull them from the queue using move semantics. 
     // The received object should then be returned by the receive function. 
+    std::unique_lock<std::mutex> lock(_mtx);
+    _condition.wait(lock, [this]() {
+        return !(this->_queue.empty());
+    });
+    auto tl = std::move(_queue.front());
+    _queue.pop_front();
+    return tl;
 }
 
 template <typename T>
@@ -26,8 +33,11 @@ void MessageQueue<T>::send(T &&msg)
 {
     // FP.4a : The method send should use the mechanisms std::lock_guard<std::mutex> 
     // as well as _condition.notify_one() to add a new message to the queue and afterwards send a notification.
+    std::lock_guard<std::mutex> lock(_mtx);
+    _queue.emplace_back(std::move(msg));
+    _condition.notify_one();
 }
-*/
+
 
 /* Implementation of class "TrafficLight" */
 TrafficLight::TrafficLight()
@@ -40,6 +50,13 @@ void TrafficLight::waitForGreen()
     // FP.5b : add the implementation of the method waitForGreen, in which an infinite while-loop 
     // runs and repeatedly calls the receive function on the message queue. 
     // Once it receives TrafficLightPhase::green, the method returns.
+    while(true) {
+        auto tl = _messages.receive();
+        if(tl == TrafficLightPhase::green) {
+            return;
+        }
+        std::this_thread::sleep_for(milliseconds(1));
+    }
 }
 
 TrafficLightPhase TrafficLight::getCurrentPhase()
@@ -70,6 +87,7 @@ void TrafficLight::cycleThroughPhases()
         //TODO:Implement RAND()
         if (time_diff >= milliseconds(milliseconds(std::rand() % (MAX_CYCLE_TIME_MS - MIN_CYCLE_TIME_MS ) + MIN_CYCLE_TIME_MS) )) {
             _currentPhase = _currentPhase == TrafficLightPhase::green ? TrafficLightPhase::red : TrafficLightPhase::green;
+            _messages.send(std::move(_currentPhase));
             std::cout << "TrafficLight CurrentPhase :" << (_currentPhase == TrafficLightPhase::green ? "green" : "red") << std::endl;
             t0 = t1;
         }
